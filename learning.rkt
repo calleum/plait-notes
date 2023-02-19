@@ -101,13 +101,6 @@
 ; -> The parameter must be a substring of the returned error message,
 ; where the empty string "" is a substring of any error message aka expect *an* error.
 
-;; Consider what other cases we should search for,
-; Addition is defined to take exactly two sub-expressions. We should provide tests for
-; zero, one, two, three, four ... n expressions.
-
-;; Because we are using `parse` to produce output to be used
-; as input for some function `calc`, we can compose the two into a test helper function.
-
 ;; Defining an add operator:
 (define (add v1 v2)
   (type-case Value v1
@@ -147,6 +140,11 @@
                       (calc t)
                       (calc e))]))
 
+
+;; Consider what other cases we should search for,
+; Addition is defined to take exactly two sub-expressions. We should provide tests for
+; zero, one, two, three, four ... n expressions.
+
 ;; Let's write some tests for the calc evaluator
 (test/exn (calc (plusE (numE 4) (boolE #false))) "RHS")
 (test (calc (numE 1)) (numV 1))
@@ -167,6 +165,8 @@
 ; Test with decimals
 ; (test (calc (plusE (numE 0.1) (numE 0.2))) 0.3)
 
+;; Because we are using `parse` to produce output to be used
+; as input for some function `calc`, we can compose the two into a test helper function.
 ;; Here, combine the `parse` and `calc` functions to
 ; `run` an  integration test with the plait syntax directly
 ;; e.g. use `{+ 1 2} instead of (calc (plusE (numE 1) (numE 2)))
@@ -174,8 +174,8 @@
 (define (run s)
   (calc (parse s)))
 
-;; Extending from the combine function above, we can create a macro to allow
-; passing in a `Number` directly for the expected output.
+;; Extending from the `run` function above, we can create a macro to allow
+; passing in a `Number` directly for the expected output:
 (define (testNum t e)
   (test t (numV e)))
 ; Rather than manually type the AST node:
