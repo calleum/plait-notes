@@ -1,4 +1,33 @@
 #lang plait
+;: This is a toy language, built out while reading PLAI, which uses plait as
+;; the host language. It is derived from scheme.
+
+;; As the language defined here becomes harder to keep track of, it is easier to
+; define it in BNF:
+;
+; <expr> ::= <num>
+;          | {+ <expr> <expr>}
+;          | {let1 {<var> <expr>} <expr>}
+;          | <var>
+;
+; Note that in the used implementation of plait, braces, square brackets and
+; parentheses are treated the same. To differentiate the toy language and the host
+; language, we are going to use curly braces, but it doesn't really matter.
+;
+; We are going to use *static scoping* s.t. a variable's binding is only
+; determined by it's position in the source program, and not the order of execution.
+; Using dynamic scoping would allow the resulting output of a function such as...
+; ------------------------
+; {let1 {x 1}
+;    {+ {if {random}
+;            4
+;            {let1 {x 2} x}}
+;         x}}
+; ------------------------
+; ...to either return a value or an unbound-variable error, depending on the
+; truthiness of the {random} input.
+
+;; Implementation 
 ; We are defining a new type, `Exp`
 (define-type  Exp
   ; There are three ways of making an `Exp`:
@@ -46,7 +75,7 @@
                      (s-exp->symbol (first l)))
            ; This models the expected expression with a recurrence
            (plusE (parse (second l))
-                 (parse (third l)))
+                  (parse (third l)))
            ; If the first thing in the list is not an addition symbol
            ; then we signal an error:
            (error 'parse "list not an addition")))]))
@@ -61,9 +90,9 @@
                  {+ {+ 2 3}
                     4}})
       (plusE (numE 1)
-            (plusE (plusE (numE 2)
-                        (numE 3))
-                  (numE 4))))
+             (plusE (plusE (numE 2)
+                           (numE 3))
+                    (numE 4))))
 ; To write negative test cases, we can use `test/exn`:
 (test/exn (parse `{1 + 2}) "")
 ; The second parameter of the test above is the expected error message of the test result ->
@@ -86,7 +115,7 @@
      (type-case Value v2
        [(numV n2) (numV (+ n1 n2))]
        [else (error '+ "expects RHS to be a number")])]
-     [else (error '+ "expects LHS to be a number")]))
+    [else (error '+ "expects LHS to be a number")]))
 
 ;; Defining a boolean-decision operator:
 ;
@@ -115,8 +144,8 @@
     [(plusE l r) (add (calc l) (calc r))]
     ; if there are three expressions, we first need to recursively evaulate
     [(cndE c t e) (if (boolean-decision (calc c))
-                     (calc t)
-                     (calc e))]))
+                      (calc t)
+                      (calc e))]))
 
 ;; Let's write some tests for the calc evaluator
 (test/exn (calc (plusE (numE 4) (boolE #false))) "RHS")
@@ -124,15 +153,15 @@
 (test (calc (numE 2.3)) (numV 2.3))
 (test (calc (plusE (numE 1) (numE 2))) (numV 3))
 (test (calc (plusE (plusE (numE 1) (numE 2))
-                  (numE 3)))
+                   (numE 3)))
       (numV 6))
 (test (calc (plusE (numE 1)
-                  (plusE (numE 2) (numE 3))))
+                   (plusE (numE 2) (numE 3))))
       (numV 6))
 (test (calc (plusE (numE 1)
-                  (plusE (plusE (numE 2)
-                              (numE 3))
-                        (numE 4))))
+                   (plusE (plusE (numE 2)
+                                 (numE 3))
+                          (numE 4))))
       (numV 10))
 
 ; Test with decimals
