@@ -50,7 +50,7 @@
 (define-type Value
   [numV (the-number : Number)]
   [boolV (the-boolean : Boolean)]
-  [funV (var : Symbol) (body : Exp)])
+  [funV (var : Symbol) (body : Exp) (nv : Env)])
 
 (define-type-alias Env (Hashof Symbol Value))
 (define mt-env (hash empty)) ;; "empty environment"
@@ -73,11 +73,11 @@
     [(numE n) (numV n)]
     [(varE s) (lookup s nv)]
     [(plusE l r) (add (interp l nv) (interp r nv))]
-    [(lamE v b) (funV v b)]
+    [(lamE v b) (funV v b nv)]
     [(appE f a) (let ([fv (interp f nv)]
                       [av (interp a nv)])
                   (type-case Value fv
-                    [(funV v b) (interp b (extend nv v av))]
+                    [(funV v b nv) (interp b (extend nv v av))]
                     [else (error 'app "didn't get a function")]))]
     [(let1E var val body)
      ; note that here, let is used from the host language to define let1 in this
@@ -86,6 +86,23 @@
                             var
                             (interp val nv))])
        (interp body new-env))]))
+
+; Now when a variable is encountered, we attempt to look it up in the current
+; environment, and either succeed or return an empty/optional if it is not found.
+(define (lookup (s : Symbol) (n : Env))
+  (type-case (Optionof Value) (hash-ref n s)
+    [(none) (error s "not bound")]
+    [(some v) v]))
+
+; From here, we can tackle `let1`, allowing us to bind to local scopes, etc.
+; We have to:
+; * evaluate the vody of the expression, in
+; * an environment that has been extended, with
+; * the new name
+; * bound to its value
+(extend : (Env Symbol Value -> Env))
+(define (extend old-env new-name value)
+  (hash-set old-env new-name value))
 
 ;; Consider what other cases we should search for,
 ; Addition is defined to take exactly two sub-expressions. We should provide tests for
@@ -102,33 +119,26 @@
 (test-interp (numE 2.3) (numV 2.3))
 (test-interp (plusE (numE 1) (numE 2)) (numV 3))
 (test-interp (plusE (plusE (numE 1) (numE 2))
-                   (numE 3))
-      (numV 6))
+                    (numE 3))
+             (numV 6))
 (test-interp (plusE (numE 1)
-                   (plusE (numE 2) (numE 3)))
-      (numV 6))
+                    (plusE (numE 2) (numE 3)))
+             (numV 6))
 (test-interp (plusE (numE 1)
-                   (plusE (plusE (numE 2)
-                                 (numE 3))
-                          (numE 4)))
-      (numV 10))
+                    (plusE (plusE (numE 2)
+                                  (numE 3))
+                           (numE 4)))
+             (numV 10))
 
-
-; Now when a variable is encountered, we attempt to look it up in the current
-; environment, and either succeed or return an empty/optional if it is not found.
-(define (lookup (s : Symbol) (n : Env))
-  (type-case (Optionof Value) (hash-ref n s)
-    [(none) (error s "not bound")]
-    [(some v) v]))
-; From here, we can tackle `let1`, allowing us to bind to local scopes, etc.
-; We have to:
-; * evaluate the vody of the expression, in
-; * an environment that has been extended, with
-; * the new name
-; * bound to its value
-(extend : (Env Symbol Value -> Env))
-(define (extend old-env new-name value)
-  (hash-set old-env new-name value))
+;; Test lambdas and application
+(test-interp (appE (let1E 'x (numE 3)
+                           (lamE 'y (plusE (varE 'x) (varE 'y))))
+                    (numE '4))
+      (numV 7))
+(test-interp (appE (let1E 'y (numE 3)
+                           (lamE 'y (plusE (varE 'y) (numE 1))))
+                    (numE '5))
+      (numV 6))
 
 
 ;; Because we are using `parse` to produce output to be used
@@ -146,7 +156,7 @@
   (test t (numV e)))
 ; Rather than manually type the AST node:
 (test (run `1) (numV 1))
-; provide the expected number: 
+; provide the expected number:
 (test-num (run `1) 1)
 
 (test-num (run `1) 1)
