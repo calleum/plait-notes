@@ -37,3 +37,18 @@ the loop constructs above. This limits the pain to implement and
 maintain the language, but allows the convenience and quality of life of
 having both loop constructs in the language's vocabulary.
 
+Interesting... Javascript
+[IIFE](https://developer.mozilla.org/en-US/docs/Glossary/IIFE): 
+*Immediately Invoked Function Expression* - 
+Another case where an anonymous function is Immediately invoked when 
+defined, and can be defined as: 
+```javascript
+() => {
+  // some initiation code
+  let firstVariable;
+  let secondVariable;
+})();
+```
+This *could* be useful when needing to run initialisation functions or
+defining variables or functions when you do not want to pollute global
+scope.
