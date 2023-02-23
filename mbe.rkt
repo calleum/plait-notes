@@ -38,11 +38,40 @@
     [(cal:let1 (var val) body)
      ((lambda (var) body) val)
      ]))
-;; When broken down, all cal:let1 does is *bind* a name to a value, then immediately 
-;; evaluate that value in an environment extended by its name. 
+;; When broken down, all cal:let1 does is *bind* a name to a value, then immediately
+;; evaluate that value in an environment extended by its name.
 ;; There is already something from interp.rkt that does that -> a function!
 ;; test: (cal:let1 (x 3) (+ x x)) ; expect 6
 ;;
 ;; This is a pattern; an anonymous function that is used right away, and it is called
 ;; *left-left-lambda*, due to the two left parentheses before the lambda call.
-;;
+
+;; Binding 1..* locals, it would be nice to be able to fluently denote an arbitrarily
+;; long sequence with syntax such as:
+(define-syntax cal:let2
+  (syntax-rules ()
+    [(cal:let2 ([var val] ...) body)
+     ((lambda (var ...) body) val ...)]))
+
+;; This says, cal:let2 is followed by any number of the pair var-val, followed by a
+;; body. Turn that into a lambda with all the vars expanded out into formal arguments,
+;; and use the argument body as body.
+;; usage:
+(cal:let2 ([x 3] [y 4]) (+ x y))
+
+;; Further exploring the ellipses, take the example of a pattern matching conditional:
+;; It can  also be defined here that the construct can be extended to match any
+;; number of patterns, and falling through through the bottom will result in an error.
+(define-syntax cal:cond
+  (syntax-rules ()
+    [(cal:cond) (error 'cal:cond "could not find a matching arm to expand")]
+    [(cal:cond [q0 a0] [q1 a1] ...)
+     (if q0
+         a0
+         (cal:cond [q1 a1] ...))]))
+
+(define (sign n)
+  (cal:cond
+   [(< n 0) "negative"]
+   [(= n 0) "zero"]
+   [(> n 0) "positive"]))
