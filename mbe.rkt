@@ -75,3 +75,56 @@
    [(< n 0) "negative"]
    [(= n 0) "zero"]
    [(> n 0) "positive"]))
+
+;; Hygiene
+;; Macros can expand to appear as though they are capturing inner variables
+;; in outer scope. Since variables in macros are bound to an environment,
+;; the macros themselves are hygienic. Take the following example:
+;; Defining a piece of syntax, to only proceed if the condition is *not*
+;; true:
+(define-syntax unless
+  (syntax-rules ()
+    ;; There is another new syntax here, using `_` means to match any syntax
+    ;; item, from https://docs.racket-lang.org/reference/stx-patterns.html
+    [(_ cond body ...)
+     (if (not cond)
+         (begin
+           body
+           ...)
+         (void))]))
+;; The case where the above macro seems ambiguous is as follows -
+;; using the macro with a let expression that seems to capture
+;; the named variables within the macro:
+(let ([not (λ (v) v)])
+  (unless false
+    (println 1)
+    (println 2)))
+;; Running this shows that the macro is hyginic, and the outer env
+;; and that in the macro are expanded without leaking the namespace, etc.
+;; This is unlike the C pre-processor
+
+;; Macro definition footguns:
+;; When defining a macro to act like a two-armed ternary operator, which
+;; evaluates the left arm, if it is truthy, returns it, otherwise returns the
+;; right arm:
+;; It would be natural to attempt to define the macro like this below, but the 
+;; issue is in the case where `e1` has some side effect that we want to only 
+;; run once.
+(define-syntax cal:bad-or
+  (syntax-rules ()
+    [(_ e1 e2)
+     (if e1
+         true
+         e2)]))
+;; With this macro, the following would print "hello" twice, which is not what we 
+;; want:
+(cal:bad-or (print "hello") "not found")
+;; In order to fix this, define the macro such that the side effect is suppressed 
+;; when the macro evaluates its truthiness, then returned when that is confirmed
+(define-syntax cal:or
+  (syntax-rules ()
+    [(_ e1 e2)
+     (let ([v e1])
+       (if v v e2))]))
+(cal:or (print "hello") "not found")
+
