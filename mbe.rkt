@@ -126,5 +126,5 @@
     [(_ e1 e2)
      (let ([v e1])
        (if v v e2))]))
+;; See that the correct output is shown when we invoke the following: 
 (cal:or (print "hello") "not found")
-
