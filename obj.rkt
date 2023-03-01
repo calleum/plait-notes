@@ -101,15 +101,11 @@
           [(inc) (lambda (n) (set! amount (+ amount n)))]
           [(dec) (lambda (n) (set! amount (- amount n)))]
           [(get) (lambda () amount)]
-          [(count) (lambda() counter)])))))
+          [(count) (lambda () counter)])))))
 ;; use the static initialisation and ensure that the global count is
 ;; incremented
-(test (let ([o (mk-o-static 1000)])
-        (msg o 'count))
-      1)
-(test (let ([o (mk-o-static 0)])
-        (msg o 'count))
-      2)
+(test (let ([o (mk-o-static 1000)]) (msg o 'count)) 1)
+(test (let ([o (mk-o-static 0)]) (msg o 'count)) 2)
 
 ;; note: this construct is tied to the object... we should be able to
 ;; access a static member, since this is owned by the _class_ and not
@@ -146,3 +142,49 @@
 ;; passing in an object reference as a parameter
 (define (msg/self o m . a)
   (apply (o m) o a))
+
+(test (msg/self o-self-no! 'first 5) 7)
+
+;; DYNAMIC DISPATCH
+;; The process of deciding which polymorphic operation is used at
+;; runtime - a key characteristic of object oriented systems. Allows a
+;; caller to invoke a method without knowing or deciding which object
+;; will handle the invocation.
+
+;; Modelling this, there doesn't need to be any type-case as we can use the constructs that have 
+;; been introduced so far into the language.
+;; Tree Objects
+;; TO1
+(define (mt)
+  (let ([self 'dummy])
+    (begin
+      (set! self
+            (lambda (m)
+              (case m
+                [(sum) (lambda () 0)])))
+      self)))
+;; TO2
+(define (node v l r)
+  (let ([self 'dummy])
+    (begin
+      (set! self
+            (lambda (m)
+              (case m
+                [(sum) (lambda () (+ v (msg l 'sum) (msg r 'sum)))])))
+      self)))
+;; using the above tree objects, create a tree
+(define a-tree (node 10 (node 5 (mt) (mt)) (node 15 (node 6 (mt) (mt)) (mt))))
+;; test dynamic dispatch on the above constructs
+(test (msg a-tree 'sum) (+ 10 5 15 6))
+
+;; OTHER
+;; Member Names - is the set of member names statically fixed, or dynamically varying? Is the 
+;; member being access at a point statically fixed 
+;; Reviewing these variables leads to 4 cells in a 2x2 table:
+;;
+;;    fixed set of members: Name is static, Name is computed
+;; variable set of members: Name is static, Name is computed
+;;
+;; from this, we can see that fixed/static is what is used in java, fixed/computed is java, using
+;; reflection, and variable/computed is what is seen in python, javascript in the syntax
+;; `object["member"]`.
