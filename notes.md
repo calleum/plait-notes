@@ -52,3 +52,22 @@ defined, and can be defined as:
 This *could* be useful when needing to run initialisation functions or
 defining variables or functions when you do not want to pollute global
 scope.
+
+#### Java upcasting
+if there is an inheriting class Pt3, extending Pt2, Pt3 can be cast to Pt2 and the values in that
+object can be seen...
+```java
+class Main {
+    public static void main(String[] args) {
+        Pt3 p3345 = new Pt3(3, 4, 5);
+        Pt3 p3678 = new Pt3(6, 7, 8);
+        // Print the Pt3 Object member values
+		System.out.println(p3345.x);
+        System.out.println(p3678.x);
+		// Cast to Pt2 and print those values 
+		System.out.println(((Pt2)p3345).x);
+        System.out.println(((Pt2)p3678).x);
+	}
+}
+
+```

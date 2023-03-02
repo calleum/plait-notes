@@ -151,7 +151,7 @@
 ;; caller to invoke a method without knowing or deciding which object
 ;; will handle the invocation.
 
-;; Modelling this, there doesn't need to be any type-case as we can use the constructs that have 
+;; Modelling this, there doesn't need to be any type-case as we can use the constructs that have
 ;; been introduced so far into the language.
 ;; Tree Objects
 ;; TO1
@@ -178,8 +178,8 @@
 (test (msg a-tree 'sum) (+ 10 5 15 6))
 
 ;; OTHER
-;; Member Names - is the set of member names statically fixed, or dynamically varying? Is the 
-;; member being access at a point statically fixed 
+;; Member Names - is the set of member names statically fixed, or dynamically varying? Is the
+;; member being access at a point statically fixed
 ;; Reviewing these variables leads to 4 cells in a 2x2 table:
 ;;
 ;;    fixed set of members: Name is static, Name is computed
@@ -188,3 +188,35 @@
 ;; from this, we can see that fixed/static is what is used in java, fixed/computed is java, using
 ;; reflection, and variable/computed is what is seen in python, javascript in the syntax
 ;; `object["member"]`.
+
+;; INHERITANCE
+;; To extend/inherit from a parent class, using the desugaring model we have been, we need to
+;; create two objects, and track calls to each of them. If we need to call a method from the parent,
+;; then we use dynamic dispatch to call to the parent's member?
+;; TO1-sized
+(define (node/size parent-maker v l r)
+  (let ([parent-object (parent-maker v l r)] [self 'dummy])
+    (begin
+      (set! self
+            (lambda (m)
+              (case m
+                [(size) (lambda () (+ 1 (msg l 'size) (msg r 'size)))]
+                [else (parent-object m)])))
+      self)))
+;; TO2-sized
+(define (mt/size parent-maker)
+  (let ([parent-object (parent-maker)] [self 'dummy])
+    (begin
+      (set! self
+            (lambda (m)
+              (case m
+                [(size) (lambda () 0)]
+                [else (parent-object m)])))
+      self)))
+;; With this pattern, the constructor has to explicitly pass in the parent object on each invocation
+;; of the downstream constructor
+(define a-tree/size
+  (node/size node
+             10
+             (node/size node 5 (mt/size mt) (mt/size mt))
+             (node/size node 15 (node/size node 6 (mt/size mt) (mt/size mt)) (mt/size mt))))
