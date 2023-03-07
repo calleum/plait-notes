@@ -220,3 +220,13 @@
              10
              (node/size node 5 (mt/size mt) (mt/size mt))
              (node/size node 15 (node/size node 6 (mt/size mt) (mt/size mt)) (mt/size mt))))
+
+;; MIXINS
+;; We can use mixins to write syntax such as
+;; mixin M extends I1 implements I2 { ... }
+;; where I1 and I2 are interfaces. Mixins can be thought of in this context as a class that has
+;; been turned into a function over parent classes:
+;; M :: I2 -> I2
+
+;; TRAITS are a generalisation of mixins that says that instead of extending a single mixin, we
+;;  can extend a set of them.
