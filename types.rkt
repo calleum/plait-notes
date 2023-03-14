@@ -64,4 +64,17 @@
 ;; resolve to the same type. Personal preference withstanding, the conditional type would
 ;; have T and E resolve to the same type.
 
+;; FUNCTION TYPE
+;; The function type is special here, because we need a constructor for the type that provides
+;; the types that the function will consume and produce. In this language, the arrow constructor is
+;; used ( ??? -> ??? ) to construct the function type.
+;; Just like in the interpreter, when typing a lambda, an environment is going to be passed in with
+;; lambda itself, resulting in the type checker syntax:
+;; Γ |- e : T -> "the environment Gamma proves that `e` has a type of `T`"
+;; This means that for we can use the environment to get the type of a variable v:
+;; Γ |- v : Γ(v)
 
+;; Typing Recusion
+;; Each application of the function type above consumes an arrow (->) each use. In order to supply
+;; a recursive construct for the language, it is typically done by adding a recursive function
+;; construct with a custom type.

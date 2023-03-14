@@ -71,3 +71,8 @@ class Main {
 }
 
 ```
+
+### Javascript wat: 
+[wat talk](https://www.destroyallsoftware.com/talks/wat)
+This reminds me of the video 
+[javascript is weird (extreme edition)](https://www.youtube.com/watch?v=sRWE5tnaxlI)
